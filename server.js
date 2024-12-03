@@ -73,7 +73,7 @@ app.post('/recover-password', (req, res) => {
 
       const transporter = nodemailer.createTransport({
         service: 'Gmail',
-        auth: { user: 'outmate.app@gmail.com', pass: 'imnb pzke ohxc wfdr' }
+        auth: { user: process.env.EMAIL_USER, pass: process.env.EMAIL_PASS }
       });
 
       const resetUrl = `https://backendoutmate-production.up.railway.app/reset-password/${token}`;
