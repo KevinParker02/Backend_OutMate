@@ -167,8 +167,8 @@ app.post('/register', async (req, res) => {
 
   const hashedPassword = await bcrypt.hash(Contra_User, 10);
   
-  const query = `INSERT INTO USUARIO (Run_User ,Tipo_User , Nom_User, Correo_User, Contra_User, Celular_User, FechaNac_User, FechaCreacion_User, Id_Comuna, Id_Estado) 
-                 VALUES (?, 101, ?, ?, ?, ?, ?, NOW(), ?, 15)`;
+  const query = `INSERT INTO USUARIO (Run_User, Nom_User, Correo_User, Contra_User, Celular_User, FechaNac_User, FechaCreacion_User, Id_Comuna, Id_Estado) 
+                 VALUES (?, ?, ?, ?, ?, ?, NOW(), ?, 15)`;
 
   db.query(query, [Run_User, Nom_User, Correo_User, hashedPassword, Celular_User, FechaNac_User, Id_Comuna], (err, result) => {
     if (err) {
@@ -241,7 +241,7 @@ app.post('/login', (req, res) => {
 
   const query = `
   SELECT 
-    Id_User, Tipo_User, Nom_User, Correo_User, Celular_User, 
+    Id_User, Nom_User, Correo_User, Celular_User, 
     Contra_User, COMUNA.Id_Comuna, COMUNA.Nombre_Comuna, 
     REGION.Id_Region, REGION.Nombre_Region 
   FROM USUARIO 
