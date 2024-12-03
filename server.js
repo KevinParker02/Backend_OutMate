@@ -55,7 +55,7 @@ const verificarColumnaToken = () => {
 };
 verificarColumnaToken();
 
-// Rutas y funciones para la recuperación de contraseña **************************************
+// Rutas y funciones para la recuperación de contraseña
 app.post('/recover-password', (req, res) => {
   const { RUT, correo } = req.body;
 
@@ -73,12 +73,12 @@ app.post('/recover-password', (req, res) => {
 
       const transporter = nodemailer.createTransport({
         service: 'Gmail',
-        auth: { user: 'playtab.app2024@gmail.com', pass: 'bgzp cihw gjca qoml' }
+        auth: { user: 'outmate.app@gmail.com', pass: 'imnb pzke ohxc wfdr' }
       });
 
       const resetUrl = `http://localhost:8100/reset-password/${token}`;
       const mailOptions = {
-        from: 'playtab.app2024@gmail.com',
+        from: 'outmate.app@gmail.com',
         to: correo,
         subject: 'Recuperación de contraseña',
         text: `Haz clic en el siguiente enlace para restablecer tu contraseña: ${resetUrl}`,
@@ -102,30 +102,25 @@ app.post('/reset-password', async (req, res) => {
 
   const query = 'SELECT * FROM USUARIO WHERE token = ?';
   db.query(query, [token], async (err, results) => {
-    if (err) {
-      return res.status(500).json({ error: 'Error en el servidor' });
-    }
-    if (results.length === 0) {
-      return res.status(404).json({ error: 'Token inválido o expirado' });
-    }
+    if (err) return res.status(500).json({ error: 'Error en el servidor' });
+    if (results.length === 0) return res.status(404).json({ error: 'Token inválido o expirado' });
 
     try {
-      const hashedPassword = await bcrypt.hash(newPassword, 10);
+      const hashedPassword = await bcrypt.hash(newPassword, 10); // Hashear la nueva contraseña
 
       const updatePasswordQuery = 'UPDATE USUARIO SET Contra_User = ?, token = NULL WHERE token = ?';
       db.query(updatePasswordQuery, [hashedPassword, token], (updateErr) => {
-        if (updateErr) {
-          return res.status(500).json({ error: 'Error al actualizar la contraseña' });
-        }
+        if (updateErr) return res.status(500).json({ error: 'Error al actualizar la contraseña' });
         res.status(200).json({ message: 'Contraseña actualizada exitosamente' });
       });
-    } catch (encryptionErr) {
-      console.error('Error al encriptar la contraseña:', encryptionErr);
-      res.status(500).json({ error: 'Error al procesar la nueva contraseña' });
+    } catch (hashErr) {
+      console.error('Error hashing new password:', hashErr);
+      res.status(500).json({ error: 'Error interno del servidor' });
     }
   });
 });
-// HASTA AQUÍ EL TEMA DE RECUPERAR CONTRASEÑA ******************************************
+
+// Aquí terminan las funcionalidades para la recuperación de la contraseña *******************
 
 app.get('/api/maps-key', (req, res) => {
   const apiKey = 'AIzaSyBI63avQmJjhUVvzJNNkejOOfiJml_zUcE'; // Tu API Key
@@ -133,6 +128,7 @@ app.get('/api/maps-key', (req, res) => {
 });
 
 // 1. Aquí se obtendrá las Regiones y Comunas disponibles para poder registrar al usuario.
+// Obtener todas las regiones.
 app.get('/regiones', (req, res) => {
   const query = 'SELECT * FROM REGION';
   db.query(query, (err, results) => { 
@@ -158,6 +154,7 @@ app.get('/comunas/:regionId', (req, res) => {
 });
 
 // 2. Aquí se realizará el INSERT del usuario. 
+// Ruta para registrar un usuario
 app.post('/register', async (req, res) => {
   const { Run_User, Nom_User, Correo_User, Contra_User, Celular_User, FechaNac_User, Id_Comuna } = req.body;
 
@@ -165,21 +162,27 @@ app.post('/register', async (req, res) => {
     return res.status(400).json({ error: 'Faltan datos requeridos' });
   }
 
-  const hashedPassword = await bcrypt.hash(Contra_User, 10);
-  
-  const query = `INSERT INTO USUARIO (Run_User, Nom_User, Correo_User, Contra_User, Celular_User, FechaNac_User, FechaCreacion_User, Id_Comuna, Id_Estado) 
-                 VALUES (?, ?, ?, ?, ?, ?, NOW(), ?, 15)`;
+  try {
+    // Hashear la contraseña
+    const hashedPassword = await bcrypt.hash(Contra_User, 10); // Salt rounds = 10
 
-  db.query(query, [Run_User, Nom_User, Correo_User, hashedPassword, Celular_User, FechaNac_User, Id_Comuna], (err, result) => {
-    if (err) {
-      console.error('Error inserting user:', err);
-      if (err.code === 'ER_DUP_ENTRY') {
-        return res.status(409).json({ error: 'El usuario ya existe' });
+    const query = `INSERT INTO USUARIO (Run_User, Nom_User, Correo_User, Contra_User, Celular_User, FechaNac_User, FechaCreacion_User, Id_Comuna, Id_Estado) 
+                   VALUES (?, ?, ?, ?, ?, ?, NOW(), ?, 15)`;
+
+    db.query(query, [Run_User, Nom_User, Correo_User, hashedPassword, Celular_User, FechaNac_User, Id_Comuna], (err, result) => {
+      if (err) {
+        console.error('Error inserting user:', err);
+        if (err.code === 'ER_DUP_ENTRY') {
+          return res.status(409).json({ error: 'El usuario ya existe' });
+        }
+        return res.status(500).json({ error: 'Error al registrar el usuario' });
       }
-      return res.status(500).json({ error: 'Error al registrar el usuario' });
-    }
-    res.status(201).json({ message: 'Usuario registrado exitosamente' });
-  });
+      res.status(201).json({ message: 'Usuario registrado exitosamente' });
+    });
+  } catch (err) {
+    console.error('Error hashing password:', err);
+    res.status(500).json({ error: 'Error interno del servidor' });
+  }
 });
 
 // 2. Aquí se realizará el INSERT de la actividad. 
@@ -239,43 +242,45 @@ app.post('/login', (req, res) => {
     return res.status(400).json({ error: 'Correo y contraseña son requeridos' });
   }
 
-  const query = `
-  SELECT 
-    Id_User, Nom_User, Correo_User, Celular_User, 
-    Contra_User, COMUNA.Id_Comuna, COMUNA.Nombre_Comuna, 
-    REGION.Id_Region, REGION.Nombre_Region 
-  FROM USUARIO 
-  INNER JOIN COMUNA ON USUARIO.Id_Comuna = COMUNA.Id_Comuna 
-  INNER JOIN REGION ON COMUNA.Id_Region = REGION.Id_Region 
-  WHERE Correo_User = ?`;
+  const query = `SELECT Id_User, Nom_User, Correo_User, Contra_User, Celular_User, 
+                 COMUNA.Id_Comuna, COMUNA.Nombre_Comuna, 
+                 REGION.Id_Region, REGION.Nombre_Region 
+                 FROM USUARIO 
+                 INNER JOIN COMUNA ON USUARIO.Id_Comuna = COMUNA.Id_Comuna 
+                 INNER JOIN REGION ON COMUNA.Id_Region = REGION.Id_Region 
+                 WHERE Correo_User = ?`;
 
-  db.query(query, [Correo_User], async (err, result) => {
+  db.query(query, [Correo_User], async (err, results) => {
     if (err) {
       console.error('Error during login:', err);
       return res.status(500).json({ error: 'Error en el servidor' });
     }
 
-    if (result.length === 0) {
+    if (results.length === 0) {
       return res.status(401).json({ error: 'Credenciales inválidas' });
     }
 
-    const user = result[0];
+    const user = results[0];
+    try {
+      // Comparar la contraseña ingresada con la almacenada
+      const isPasswordValid = await bcrypt.compare(Contra_User, user.Contra_User);
 
-    // Verifica la contraseña con bcrypt
-    const isPasswordValid = await bcrypt.compare(Contra_User, user.Contra_User);
+      if (!isPasswordValid) {
+        return res.status(401).json({ error: 'Credenciales inválidas' });
+      }
 
-    if (!isPasswordValid) {
-      return res.status(401).json({ error: 'Credenciales inválidas' });
+      // Excluir contraseña antes de enviar la respuesta
+      delete user.Contra_User;
+      res.status(200).json({ message: 'Login exitoso', user });
+    } catch (err) {
+      console.error('Error comparing password:', err);
+      res.status(500).json({ error: 'Error interno del servidor' });
     }
-
-    // Si la contraseña es válida, elimina la contraseña del objeto y responde
-    delete user.Contra_User; // Elimina la contraseña encriptada antes de enviar la respuesta
-
-    res.status(200).json({ message: 'Login exitoso', user });
   });
 });
 
-// 3. Aquí se obtendrá las Categoria y subcategoria 
+// 3. Aquí se obtendrá las Categoria y subcategoria *************************************
+// Obtener todas las regiones.
 app.get('/categoria', (req, res) => {
   const query = 'SELECT * FROM CATEGORIA';
   db.query(query, (err, results) => { 
@@ -287,8 +292,9 @@ app.get('/categoria', (req, res) => {
   });
 });
 
+// Obtener las comunas por id de la Categoria. 
 app.get('/subcategoria/:categoriaId', (req, res) => {
-  const categoriaId = req.params.categoriaId; 
+  const categoriaId = req.params.categoriaId; // Obtiene el id de la Categoria desde la URL
   const query = 'SELECT * FROM SUBCATEGORIA WHERE Id_Categoria = ?';
   db.query(query, [categoriaId], (err, results) => {
     if (err) {
@@ -300,6 +306,7 @@ app.get('/subcategoria/:categoriaId', (req, res) => {
 });
 
 // 4. Aquí se obtendrá los jugadores máximos
+// Obtener todas las regiones.
 app.get('/cantidad', (req, res) => {
   const query = 'SELECT * FROM MAXJUGADOR';
   db.query(query, (err, results) => { 
@@ -312,6 +319,7 @@ app.get('/cantidad', (req, res) => {
 });
 
 // 5. Este es para obtener las actividades
+// Endpoint para obtener todas las actividades
 app.get('/actividades', (req, res) => {
   const { Id_Comuna } = req.query;
   const query = `SELECT a.Id_Actividad, u.Nom_User, a.Nom_Actividad, a.Fecha_INI_Actividad, a.Fecha_TER_Actividad, a.Desc_Actividad, a.Direccion_Actividad, m.Cantidad_MaxJugador, s.Nom_SubCategoria, C.Nom_Categoria, i.Url 
@@ -332,7 +340,7 @@ app.get('/actividades', (req, res) => {
 
 app.get('/jugdoresInscritos', (req, res) => {
   const { Id_Actividad } = req.query;
-  const query = 'SELECT COUNT(Id_Actividad) FROM PARTICIPANTE WHERE Id_Actividad = ?;';
+  const query = 'SELECT COUNT(Id_Actividad) FROM `OutMate`.`PARTICIPANTE` WHERE Id_Actividad = ?;';
   db.query(query, [Id_Actividad], (err, results) => {
     if (err) {
       console.error('Error:', err);
@@ -342,7 +350,7 @@ app.get('/jugdoresInscritos', (req, res) => {
   });
 });
 
-// insertar participante en la Actividad
+// Función para insertar participante en la Actividad
 app.post('/participante', (req, res) => {
   const { Id_Actividad, Id_Asistencia, Id_User, Tipo_Participante } = req.body;
 
@@ -407,7 +415,7 @@ app.put('/cambiaComuna', (req, res) => {
 //Ver el historial de actividades
 app.get('/historial', (req, res) => {
   const { Id_User } = req.query;
-  const query = `SELECT DISTINCT u.Nom_User, a.Nom_Actividad, a.Desc_actividad, a.Direccion_Actividad, a.Celular_User, a.Fecha_TER_Actividad, s.Nom_SubCategoria, i.url
+  const query = `SELECT DISTINCT a.Nom_Actividad, a.Direccion_Actividad, a.Celular_User, a.Fecha_TER_Actividad, s.Nom_SubCategoria, i.url
                   FROM PARTICIPANTE p
                   JOIN ACTIVIDAD a ON p.Id_Actividad = a.Id_Actividad
                   JOIN USUARIO u ON a.Id_Anfitrion_Actividad = u.Id_User
@@ -606,7 +614,6 @@ const actualizarContrasenas = async () => {
 
 // Llama a esta función manualmente cuando lo necesites
 actualizarContrasenas();
-
 
 // Iniciar el servidor
 app.listen(port, () => {
