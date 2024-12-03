@@ -7,7 +7,7 @@ const app = express();
 const port = 3000;
 const bcrypt = require('bcryptjs');
 require('dotenv').config();
-const allowedOrigins = ['http://localhost:8100', 'http://backendoutmate-production.up.railway.app','*'];
+const allowedOrigins = ['http://localhost:8100', 'http://backendoutmate-production.up.railway.app'];
 app.use(cors({
   origin: (origin, callback) => {
     if (!origin || allowedOrigins.includes(origin)) {
@@ -37,7 +37,7 @@ db.connect((err) => {
   if (err) {
     console.error('Error connecting to the database:', err);
     return;  }
-  console.log('Connected to MySQL database');
+  console.log('Connected to database');
 });
 
 // Comprobación y adición de la columna 'token' para recuperación de contraseña *******************
