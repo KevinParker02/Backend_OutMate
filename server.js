@@ -7,12 +7,16 @@ const app = express();
 const port = 3000;
 const bcrypt = require('bcryptjs');
 require('dotenv').config();
-const allowedOrigins = ['http://localhost:8100', 'http://backendoutmate-production.up.railway.app',
+const allowedOrigins = [
+  'http://localhost:8100',
+  'http://backendoutmate-production.up.railway.app',
   'capacitor://localhost',
-  'ionic://localhost' ];
+  'ionic://localhost'
+];
 
 app.use(cors({
   origin: (origin, callback) => {
+    console.log('Request origin:', origin);
     if (!origin || allowedOrigins.includes(origin)) {
       callback(null, true); // Permitir el origen
     } else {
