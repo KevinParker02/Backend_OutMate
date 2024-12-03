@@ -76,7 +76,8 @@ app.post('/recover-password', (req, res) => {
         auth: { user: 'outmate.app@gmail.com', pass: 'imnb pzke ohxc wfdr' }
       });
 
-      const resetUrl = `http://localhost:8100/reset-password/${token}`;
+      const resetUrl = `https://backendoutmate-production.up.railway.app/reset-password/${token}`;
+
       const mailOptions = {
         from: 'outmate.app@gmail.com',
         to: correo,
