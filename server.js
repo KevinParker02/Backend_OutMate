@@ -570,6 +570,7 @@ app.put('/actualizar-asistencia', (req, res) => {
   });
 });
 
+/*
 //Funcion hashear contraseñas ya existentes en SQL
 const actualizarContrasenas = async () => {
   try {
@@ -614,6 +615,7 @@ const actualizarContrasenas = async () => {
 
 // Llama a esta función manualmente cuando lo necesites
 actualizarContrasenas();
+*/
 
 // Iniciar el servidor
 app.listen(port, () => {
