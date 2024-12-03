@@ -340,7 +340,7 @@ app.get('/actividades', (req, res) => {
 
 app.get('/jugdoresInscritos', (req, res) => {
   const { Id_Actividad } = req.query;
-  const query = 'SELECT COUNT(Id_Actividad) FROM `OutMate`.`PARTICIPANTE` WHERE Id_Actividad = ?;';
+  const query = 'SELECT COUNT(Id_Actividad) FROM PARTICIPANTE WHERE Id_Actividad = ?;';
   db.query(query, [Id_Actividad], (err, results) => {
     if (err) {
       console.error('Error:', err);
