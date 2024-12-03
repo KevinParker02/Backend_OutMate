@@ -9,7 +9,7 @@ const bcrypt = require('bcryptjs');
 require('dotenv').config();
 const allowedOrigins = [
   'http://localhost:8100',
-  'https://backendoutmate-production.up.railway.app',
+  'http://backendoutmate-production.up.railway.app',
   'capacitor://localhost',
   'ionic://localhost'
 ];
