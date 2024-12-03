@@ -7,21 +7,24 @@ const app = express();
 const port = 3000;
 const bcrypt = require('bcryptjs');
 require('dotenv').config();
-const allowedOrigins = ['http://localhost:8100', 'http://backendoutmate-production.up.railway.app',,
+const allowedOrigins = [
+  'http://localhost:8100',
+  'https://backendoutmate-production.up.railway.app',
   'capacitor://localhost',
-  'ionic://localhost' ];
+  'ionic://localhost'
+];
 
 app.use(cors({
   origin: (origin, callback) => {
     if (!origin || allowedOrigins.includes(origin)) {
-      callback(null, true); // Permitir el origen
+      callback(null, true);
     } else {
-      callback(new Error('CORS no permitido')); // Bloquear origen no autorizado
+      callback(new Error('CORS no permitido'));
     }
   },
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'], // Métodos permitidos
-  allowedHeaders: ['Content-Type', 'Authorization'], // Encabezados permitidos
-  credentials: true, // Permitir cookies y autenticación
+  methods: ['GET', 'POST', 'OPTIONS', 'PUT', 'DELETE'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: true, // Permitir cookies o tokens
 }));
 app.options('*', cors()); // Maneja solicitudes preflight para cualquier ruta
 app.use(express.json());
