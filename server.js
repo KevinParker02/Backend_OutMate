@@ -456,7 +456,7 @@ app.get('/actividad_activa', (req, res) => {
 app.delete('/eliminar_usuario_actividad', (req, res) => {
   const { Id_User, Id_Actividad } = req.query;
 
-  const query = 'DELETE FROM participante WHERE Id_user = ? AND Id_actividad = ?';
+  const query = 'DELETE FROM PARTICIPANTE WHERE Id_user = ? AND Id_actividad = ?';
   db.query(query, [Id_User, Id_Actividad], (err, results) => {
     if (err) {
       console.error('Error al eliminar usuario de actividad:', err);
