@@ -323,13 +323,21 @@ app.get('/cantidad', (req, res) => {
 // Endpoint para obtener todas las actividades
 app.get('/actividades', (req, res) => {
   const { Id_Comuna } = req.query;
-  const query = `SELECT a.Id_Actividad, u.Nom_User, a.Nom_Actividad, a.Fecha_INI_Actividad, a.Fecha_TER_Actividad, a.Desc_Actividad, a.Direccion_Actividad, m.Cantidad_MaxJugador, s.Nom_SubCategoria, C.Nom_Categoria, i.Url 
-                FROM ACTIVIDAD a Inner Join USUARIO u on a.Id_Anfitrion_Actividad = u.Id_User 
-                INNER JOIN MAXJUGADOR m ON a.Id_Maxjugador = m.Id_Maxjugador 
-                INNER JOIN SUBCATEGORIA s ON s.Id_SubCategoria = a.Id_SubCategoria 
-                INNER JOIN CATEGORIA C ON s.Id_Categoria = C.Id_Categoria 
-                LEFT JOIN IMAGEN i ON s.Id_SubCategoria = i.Id_SubCategoria 
-                WHERE a.Id_Comuna = ? AND Fecha_INI_Actividad<=now() and Fecha_TER_Actividad>=now();`;
+  const query = `SELECT a.Id_Actividad, u.Nom_User, 
+                  a.Nom_Actividad, 
+                  a.Fecha_INI_Actividad, DATE_FORMAT(a.Fecha_INI_Actividad, '%d/%m/%Y') AS Fecha_Inicio, DATE_FORMAT(a.Fecha_INI_Actividad, '%H:%i') AS Hora_Inicio,
+                  a.Fecha_TER_Actividad, DATE_FORMAT(a.Fecha_TER_Actividad, '%d/%m/%Y') AS Fecha_Termino, DATE_FORMAT(a.Fecha_TER_Actividad, '%H:%i') AS Hora_Termino,
+                  a.Desc_Actividad, 
+                  a.Direccion_Actividad, 
+                  m.Cantidad_MaxJugador, 
+                  s.Nom_SubCategoria, 
+                  C.Nom_Categoria, i.Url 
+                          FROM ACTIVIDAD a Inner Join USUARIO u on a.Id_Anfitrion_Actividad = u.Id_User 
+                          INNER JOIN MAXJUGADOR m ON a.Id_Maxjugador = m.Id_Maxjugador 
+                          INNER JOIN SUBCATEGORIA s ON s.Id_SubCategoria = a.Id_SubCategoria 
+                          INNER JOIN CATEGORIA C ON s.Id_Categoria = C.Id_Categoria 
+                          LEFT JOIN IMAGEN i ON s.Id_SubCategoria = i.Id_SubCategoria
+                          WHERE a.Id_Comuna = ? AND Fecha_INI_Actividad<=now() and Fecha_TER_Actividad>=now();`;
   db.query(query, [Id_Comuna], (err, results) => {
     if (err) {
       console.error('Error al obtener actividades:', err);
@@ -435,7 +443,16 @@ app.get('/historial', (req, res) => {
 // Obtener actividades y datos especificos de la actividad de los usuarios inscritos
 app.get('/actividad_activa', (req, res) => {
   const { Id_User } = req.query;
-  const query = `SELECT DISTINCT a.Nom_Actividad, a.Id_Actividad, u.Nom_User, a.Desc_Actividad, u.Celular_User, a.Direccion_Actividad, m.Cantidad_MaxJugador, a.Fecha_TER_Actividad, p.Tipo_Participante, s.Nom_SubCategoria, i.Url
+  const query = `SELECT DISTINCT a.Nom_Actividad, 
+                                a.Id_Actividad, 
+                                u.Nom_User, 
+                                a.Desc_Actividad, 
+                                u.Celular_User, 
+                                a.Direccion_Actividad, 
+                                m.Cantidad_MaxJugador, 
+                                a.Fecha_TER_Actividad, DATE_FORMAT(a.Fecha_TER_Actividad, '%d/%m/%Y') AS Fecha_Termino, DATE_FORMAT(a.Fecha_TER_Actividad, '%H:%i') AS Hora_Termino,
+                                p.Tipo_Participante, 
+                                s.Nom_SubCategoria, i.Url
                   FROM PARTICIPANTE p
                   JOIN ACTIVIDAD a ON p.Id_Actividad = a.Id_Actividad
                   INNER JOIN MAXJUGADOR m ON a.Id_Maxjugador = m.Id_Maxjugador
@@ -469,15 +486,23 @@ app.delete('/eliminar_usuario_actividad', (req, res) => {
 app.get('/actividadesAnfitrion', (req, res) => {
   const { Id_User } = req.query; // Usamos Id_User desde la query en lugar de Id_Anfitrion_Actividad
   const query = `
-    SELECT a.Id_Actividad, a.Nom_Actividad, a.Desc_actividad, a.Direccion_Actividad, m.Cantidad_MaxJugador, u.Nom_User, a.Fecha_INI_Actividad, a.Fecha_TER_Actividad, i.Url, s.Id_SubCategoria, s.Nom_SubCategoria
-    FROM ACTIVIDAD a
-    INNER JOIN USUARIO u ON a.Id_Anfitrion_Actividad=u.Id_User
-    JOIN IMAGEN i on a.Id_SubCategoria=i.Id_SubCategoria
-    JOIN SUBCATEGORIA s ON a.Id_SubCategoria= s.Id_SubCategoria
-    JOIN CATEGORIA c on s.Id_Categoria=c.Id_Categoria
-    JOIN MAXJUGADOR m on a.Id_MaxJugador=m.Id_MaxJugador
-    WHERE Id_Anfitrion_Actividad=? and DATE(a.Fecha_INI_Actividad) = CURDATE()
-    order by a.Fecha_TER_Actividad asc;
+    SELECT a.Id_Actividad, a.Nom_Actividad, 
+                          a.Desc_actividad, a.Direccion_Actividad, 
+                          m.Cantidad_MaxJugador, 
+                          u.Nom_User, 
+                          a.Fecha_INI_Actividad, DATE_FORMAT(a.Fecha_INI_Actividad, '%d/%m/%Y') AS Fecha_Inicio, DATE_FORMAT(a.Fecha_INI_Actividad, '%H:%i') AS Hora_Inicio,
+                          a.Fecha_TER_Actividad, DATE_FORMAT(a.Fecha_TER_Actividad, '%d/%m/%Y') AS Fecha_Termino, DATE_FORMAT(a.Fecha_TER_Actividad, '%H:%i') AS Hora_Termino,
+                          i.Url, s.Id_SubCategoria, 
+                          s.Id_Categoria, 
+                          s.Nom_SubCategoria
+      FROM ACTIVIDAD a
+      INNER JOIN USUARIO u ON a.Id_Anfitrion_Actividad=u.Id_User
+      JOIN IMAGEN i on a.Id_SubCategoria=i.Id_SubCategoria
+      JOIN SUBCATEGORIA s ON a.Id_SubCategoria= s.Id_SubCategoria
+      JOIN CATEGORIA c on s.Id_Categoria=c.Id_Categoria
+      JOIN MAXJUGADOR m on a.Id_MaxJugador=m.Id_MaxJugador
+      WHERE Id_Anfitrion_Actividad=? and DATE(a.Fecha_INI_Actividad) = CURDATE()
+      order by a.Fecha_TER_Actividad asc;
   `;
   db.query(query, [Id_User], (err, results) => {
     if (err) {
