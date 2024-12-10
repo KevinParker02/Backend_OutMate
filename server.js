@@ -83,7 +83,6 @@ app.post('/recover-password', (req, res) => {
         to: correo,
         subject: 'Recuperación de contraseña',
         text: `Copia el siguiente token para restablecer tu contraseña: ${resetUrl}`,
-        html: `<p>Copia el siguiente token para restablecer tu contraseña:</p><a href="${resetUrl}">${resetUrl}</a>`
       };
 
       transporter.sendMail(mailOptions, (error) => {
