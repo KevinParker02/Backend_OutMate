@@ -76,14 +76,14 @@ app.post('/recover-password', (req, res) => {
         auth: { user: process.env.EMAIL_USER, pass: process.env.EMAIL_PASS }
       });
 
-      const resetUrl = `outmate://reset-password/${token}`;
+      const resetUrl = `${token}`;
 
       const mailOptions = {
         from: 'outmate.app@gmail.com',
         to: correo,
         subject: 'Recuperación de contraseña',
-        text: `Haz clic en el siguiente enlace para restablecer tu contraseña: ${resetUrl}`,
-        html: `<p>Haz clic en el siguiente enlace para restablecer tu contraseña:</p><a href="${resetUrl}">${resetUrl}</a>`
+        text: `Copia el siguiente token para restablecer tu contraseña: ${resetUrl}`,
+        html: `<p>Copia el siguiente token para restablecer tu contraseña:</p><a href="${resetUrl}">${resetUrl}</a>`
       };
 
       transporter.sendMail(mailOptions, (error) => {
