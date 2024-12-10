@@ -76,7 +76,7 @@ app.post('/recover-password', (req, res) => {
         auth: { user: process.env.EMAIL_USER, pass: process.env.EMAIL_PASS }
       });
 
-      const resetUrl = `http://localhost/reset-password/${token}`;
+      const resetUrl = `outmate://reset-password/${token}`;
 
       const mailOptions = {
         from: 'outmate.app@gmail.com',
