@@ -82,8 +82,8 @@ app.post('/recover-password', (req, res) => {
         from: 'outmate.app@gmail.com',
         to: correo,
         subject: 'Recuperación de contraseña',
-        text: `Copia el siguiente token para restablecer tu contraseña: ${resetUrl}`,
-      };
+        html: `Copia el siguiente token para restablecer tu contraseña: <b>${resetUrl}</b>`
+    };    
 
       transporter.sendMail(mailOptions, (error) => {
         if (error) return res.status(500).json({ error: 'Error enviando el correo' });
