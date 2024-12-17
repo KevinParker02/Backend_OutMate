@@ -293,13 +293,16 @@ app.post('/login', (req, res) => {
     return res.status(400).json({ error: 'Correo y contraseña son requeridos' });
   }
 
-  const query = `SELECT Id_User, Nom_User, Correo_User, Contra_User, Celular_User, 
-                 COMUNA.Id_Comuna, COMUNA.Nombre_Comuna, 
-                 REGION.Id_Region, REGION.Nombre_Region 
-                 FROM USUARIO 
-                 INNER JOIN COMUNA ON USUARIO.Id_Comuna = COMUNA.Id_Comuna 
-                 INNER JOIN REGION ON COMUNA.Id_Region = REGION.Id_Region 
-                 WHERE Correo_User = ?`;
+  const query = `SELECT 
+                  USUARIO.Id_User, USUARIO.Nom_User, USUARIO.Correo_User, USUARIO.Celular_User, 
+                  USUARIO.Contra_User, COMUNA.Id_Comuna, COMUNA.Nombre_Comuna, 
+                  REGION.Id_Region, REGION.Nombre_Region, SUBCATEGORIA.Id_SubCategoria ,SUBCATEGORIA.Nom_SubCategoria
+                FROM USUARIO 
+                INNER JOIN COMUNA ON USUARIO.Id_Comuna = COMUNA.Id_Comuna 
+                INNER JOIN REGION ON COMUNA.Id_Region = REGION.Id_Region
+                LEFT JOIN FAVORITO ON USUARIO.Id_User=FAVORITO.Id_User
+                LEFT JOIN SUBCATEGORIA ON FAVORITO.Id_SubCategoria=SUBCATEGORIA.Id_SubCategoria
+                WHERE Correo_User = ?`;
 
   db.query(query, [Correo_User], async (err, results) => {
     if (err) {
@@ -646,52 +649,55 @@ app.put('/actualizar-asistencia', (req, res) => {
   });
 });
 
-/*
-//Funcion hashear contraseñas ya existentes en SQL
-const actualizarContrasenas = async () => {
-  try {
-    const querySelect = 'SELECT Id_User, Contra_User FROM USUARIO';
-    db.query(querySelect, async (err, users) => {
-      if (err) {
-        console.error('Error al obtener usuarios:', err);
-        return;
-      }
+app.post('/cambiarFavorito', (req, res) => {
+  const { Id_SubCategoria, Id_User } = req.body;
 
-      for (const user of users) {
-        const { Id_User, Contra_User } = user;
-
-        // Saltar si la contraseña ya parece estar hasheada
-        if (Contra_User.startsWith('$2b$')) {
-          console.log(`Contraseña para usuario con ID ${Id_User} ya está hasheada. Saltando...`);
-          continue;
-        }
-
-        try {
-          // Hashear la contraseña
-          const hashedPassword = await bcrypt.hash(Contra_User, 10);
-
-          // Actualizar la base de datos con la contraseña hasheada
-          const queryUpdate = 'UPDATE USUARIO SET Contra_User = ? WHERE Id_User = ?';
-          db.query(queryUpdate, [hashedPassword, Id_User], (updateErr) => {
-            if (updateErr) {
-              console.error(`Error al actualizar la contraseña para ID ${Id_User}:`, updateErr);
-            } else {
-              console.log(`Contraseña para usuario con ID ${Id_User} actualizada correctamente.`);
-            }
-          });
-        } catch (hashErr) {
-          console.error(`Error al hashear la contraseña para ID ${Id_User}:`, hashErr);
-        }
-      }
-    });
-  } catch (err) {
-    console.error('Error en la migración de contraseñas:', err);
+  if (!Id_SubCategoria || !Id_User) {
+    return res.status(400).json({ error: 'Faltan datos requeridos' });
   }
-};
 
-// Llama a esta función manualmente cuando lo necesites
-actualizarContrasenas();
-*/
+  const query = `
+    INSERT INTO FAVORITO (Id_User, Id_SubCategoria) 
+    VALUES (?, ?) 
+    ON DUPLICATE KEY UPDATE 
+    Id_SubCategoria = VALUES(Id_SubCategoria);
+  `;
+
+  db.query(query, [Id_User, Id_SubCategoria], (err, result) => {
+    if (err) {
+      console.error('Error al insertar o actualizar tu Actividad Favorita:', err);
+      return res.status(500).json({ error: 'Error al insertar o actualizar tu Actividad Favorita.' });
+    }
+    res.status(201).json({ message: 'Actividad Favorita insertada o actualizada.' });
+  });
+});
+
+app.get('/actividadFavorito', (req, res) => {
+  const { Id_Comuna } = req.query;
+  const { Id_SubCategoria } = req.query;
+  const query = `SELECT a.Id_Actividad, u.Nom_User, 
+                  a.Nom_Actividad, 
+                  a.Fecha_INI_Actividad, DATE_FORMAT(a.Fecha_INI_Actividad, '%d/%m/%Y') AS Fecha_Inicio, DATE_FORMAT(a.Fecha_INI_Actividad, '%H:%i') AS Hora_Inicio,
+                  a.Fecha_TER_Actividad, DATE_FORMAT(a.Fecha_TER_Actividad, '%d/%m/%Y') AS Fecha_Termino, DATE_FORMAT(a.Fecha_TER_Actividad, '%H:%i') AS Hora_Termino,
+                  a.Desc_Actividad, 
+                  a.Direccion_Actividad, 
+                  m.Cantidad_MaxJugador, 
+                  s.Nom_SubCategoria, 
+                  C.Nom_Categoria, i.Url 
+                          FROM ACTIVIDAD a Inner Join USUARIO u on a.Id_Anfitrion_Actividad = u.Id_User 
+                          INNER JOIN MAXJUGADOR m ON a.Id_Maxjugador = m.Id_Maxjugador 
+                          INNER JOIN SUBCATEGORIA s ON s.Id_SubCategoria = a.Id_SubCategoria 
+                          INNER JOIN CATEGORIA C ON s.Id_Categoria = C.Id_Categoria 
+                          LEFT JOIN IMAGEN i ON s.Id_SubCategoria = i.Id_SubCategoria
+                          WHERE a.Id_Comuna =? AND s.Id_SubCategoria=? AND Fecha_INI_Actividad<=now() and Fecha_TER_Actividad>=now();`;
+  db.query(query, [Id_Comuna, Id_SubCategoria], (err, results) => {
+    if (err) {
+      console.error('Error al obtener actividades favoritas:', err);
+      return res.status(500).json({ error: 'Error al obtener actividades favoritas' });
+    }
+    res.json(results);
+  });
+});
 
 app.listen(port, () => {
   console.log(`Server running on https://backendoutmate-production.up.railway.app`);
