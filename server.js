@@ -112,8 +112,29 @@ app.post('/recover-password', (req, res) => {
         from: 'outmate.app@gmail.com',
         to: correo,
         subject: 'Recuperación de contraseña',
-        html: `Copia el siguiente token para restablecer tu contraseña: <b>${resetUrl}</b>`
-    };    
+        html: `
+          <div style="font-family: Arial, sans-serif; text-align: center; padding: 20px; background-color: #f4f4f9; color: #333;">
+            <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border: 1px solid #ddd; border-radius: 5px; overflow: hidden;">
+              <div style="background-color: #6FEE53; padding: 10px 20px;">
+                <h2 style="color: #ffffff; margin: 0;">Recuperación de Contraseña</h2>
+              </div>
+              <div style="padding: 20px; text-align: left;">
+                <p>Hola,</p>
+                <p>Has solicitado restablecer tu contraseña. Usa el siguiente código para continuar:</p>
+                <div style="margin: 20px 0; padding: 10px; background-color: #f7f7f7; border: 1px dashed #ddd; text-align: center; font-size: 20px; font-weight: bold; color: #333;">
+                  ${resetUrl}
+                </div>
+                <p>Si no realizaste esta solicitud, puedes ignorar este mensaje.</p>
+                <p style="margin: 20px 0 0;">Gracias,</p>
+                <p><strong>El equipo de OutMate</strong></p>
+              </div>
+              <div style="background-color: #f4f4f9; padding: 10px; font-size: 12px; color: #666;">
+                <p>Este correo se generó automáticamente, por favor no respondas.</p>
+              </div>
+            </div>
+          </div>
+        `
+      };    
 
       transporter.sendMail(mailOptions, (error) => {
         if (error) return res.status(500).json({ error: 'Error enviando el correo' });
